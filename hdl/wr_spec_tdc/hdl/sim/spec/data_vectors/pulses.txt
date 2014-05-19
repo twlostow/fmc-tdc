@@ -1,0 +1,9 @@
+2600 us  1  5 us
+800 us   2  505 ns
+162 ps   3  505 ns
+500 us   4   505 ns
+400 ps   1  505 ns
+18 ps   5   505 ns
+600 ns   1   100 ps
+110 ps   2   100 ps
+110 ps   3   100 ps

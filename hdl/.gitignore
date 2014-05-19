@@ -1,0 +1,12 @@
+*.*\#
+\#*
+.\#*
+*.*~
+hdl/ip_cores/*
+modelsim.ini
+*.wlf
+*.vstf
+work
+*.bak
+syn/*
+transcript

@@ -1,0 +1,75 @@
+-------------------------------------------------------------------------------
+-- acam_test.vec
+-------------------------------------------------------------------------------
+-- Select the GN4124 Primary BFM
+model 0
+
+-- Initialize the BFM to its default state
+init
+
+-------------------------------------------------------------------------------
+-- Initialize the Primary GN412x BFM model
+-------------------------------------------------------------------------------
+-- These address ranges will generate traffic from the BFM to the FPGA
+-- bar BAR ADDR SIZE VC TC S
+bar     0 0000000000000000 00100000 0 7 0
+
+-- This allocates a RAM block inside the BFM for the FPGA to access
+-- bfm_bar BAR ADDR SIZE
+bfm_bar 0 0000000040000000 20000000
+bfm_bar 1 0000000020000000 20000000
+
+-- Drive reset to the FPGA
+reset %d320
+-- Wait until the FPGA is un-reset and ready for traffic on the local bus
+wait   %d50000
+
+-- Drive reset to the FPGA
+reset %d320
+-- Wait until the FPGA is un-reset and ready for traffic on the local bus
+wait   %d60000
+
+-------------------------------------------------------------------------------
+-- Access the tdc core register space
+-------------------------------------------------------------------------------
+-- the following writes will go out in a single packet
+
+-- Gonzalo: 3 writings outside of the BAR defined memory space to check that 
+-- the BFM model does not forward them to the Local bus
+
+wr 0000000040000808 F 0001F04C
+wait   %d50
+wr 0000000040000800 F 00021040
+wait   %d50
+wr 0000000040000800 F 00025000
+wait   %d50
+
+-- Gonzalo: 5 reads inside Matthieu's core memory space to check that the core
+-- does not forward them to the wishbone bus
+
+rd 0000000000000000 F 0000A0A1
+wait   %d20
+rd 0000000000000004 F 0000A0A2
+wait   %d20
+rd 0000000000000008 F 0000A0A3
+wait   %d20
+rd 000000000000000C F 0000A0A4
+wait   %d20
+rd 0000000000000010 F 0000A0A5
+wait   %d60
+
+-- Gonzalo: actual wr and rd for test
+
+wr 0000000000005000 F 0000FC81
+wait   %d50
+wr 000000000000502C F 00FF0000
+wait   %d50
+rd 0000000000080000 F 0000FC81
+wait   %d50
+rd 000000000008002C F 00FF0000
+wait   %d50
+
+wr 0000000000080030 F 04000000
+wait   %d50
+rd 0000000000080030 F 04000000
+wait   %d50

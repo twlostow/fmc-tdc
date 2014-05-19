@@ -1,0 +1,179 @@
+-------------------------------------------------------------------------------
+-- acam_test.vec
+-------------------------------------------------------------------------------
+-- Select the GN4124 Primary BFM
+model 0
+
+-- Initialize the BFM to its default state
+init
+
+-------------------------------------------------------------------------------
+-- Initialize the Primary GN412x BFM model
+-------------------------------------------------------------------------------
+-- These address ranges will generate traffic from the BFM to the FPGA
+-- bar BAR ADDR SIZE VC TC S
+bar     0 0000000000000000 00100000 0 7 0
+
+-- This allocates a RAM block inside the BFM for the FPGA to access
+-- bfm_bar BAR ADDR SIZE
+bfm_bar 0 0000000040000000 20000000
+bfm_bar 1 0000000020000000 20000000
+
+-- Drive reset to the FPGA
+reset %d320
+-- Wait until the FPGA is un-reset and ready for traffic on the local bus
+wait   %d50000
+
+-- Drive reset to the FPGA
+reset %d320
+-- Wait until the FPGA is un-reset and ready for traffic on the local bus
+wait   %d60000
+
+-------------------------------------------------------------------------------
+-- Access the tdc core register space
+-------------------------------------------------------------------------------
+-- the following writes will go out in a single packet
+
+---- Gonzalo: 3 writings outside of the BAR defined memory space to check that 
+---- the BFM model does not forward them to the Local bus
+--wr 0000000040000808 F 0001F04C
+--wait   %d20
+--wr 0000000040000800 F 00021040
+--wait   %d20
+--wr 0000000040000800 F 00025000
+--wait   %d60
+
+---- Gonzalo: 3 reads inside Matthieu's core memory space to check that the core
+---- does not forward them to the wishbone bus
+--rd 0000000000000000 F 0000A0A1
+--wait   %d20
+--rd 0000000000000004 F 0000A0A2
+--wait   %d20
+--rd 0000000000000008 F 0000A0A3
+--wait   %d60
+
+-- Gonzalo: actual wr and rd on the application memory space for test
+-- writing stuff on the TDC config
+--wr 0000000000005000 F 00000040
+--wait   %d20
+--wr 0000000000005004 F 00000000
+--wait   %d20
+--wr 0000000000005008 F 00000000
+--wait   %d60
+
+-- writing stuff for the ACAM config
+wr 0000000000005000 F 01F0FC81
+wait   %d20
+wr 0000000000005004 F 00000000
+wait   %d20
+wr 0000000000005008 F 00000E02
+wait   %d60
+
+-- loading the utc time
+wr 00000000000050FC F 00000200
+wait   %d200
+
+-- loading the acam config
+wr 00000000000050FC F 00000004
+wait   %d200
+
+-- reading back the acam config
+wr 00000000000050FC F 00000008
+wait   %d200
+
+-- activate acquisition
+wr 00000000000050FC F 00000001
+wait   %d540000
+
+-- read circular buffer wr pointer
+rd 000000000000509C F 00000000
+wait   %d200
+
+-- prepare and launch DMA transfer
+wr 000000000000000C F 36EF8000
+wait   %d20
+wr 0000000000000014 F 00000210
+wait   %d100
+
+wr 0000000000000000 F 00000001
+wait   %d100
+
+
+-- deactivate acquisition
+wr 00000000000800FC F 00000002
+wait   %d200
+
+-- read acam status
+wr 00000000000800FC F 00000010
+wait   %d100
+rd 0000000000080070 F 00000000
+wait   %d100
+
+-- read acam ififo1
+wr 00000000000800FC F 00000020
+wait   %d100
+rd 0000000000080060 F 00000000
+wait   %d100
+
+-- read acam ififo2
+wr 00000000000800FC F 00000040
+wait   %d100
+rd 0000000000080064 F 00000000
+wait   %d100
+
+-- read acam start01 register
+wr 00000000000800FC F 00000080
+wait   %d100
+rd 0000000000080068 F 00000000
+wait   %d100
+
+-- reset acam
+wr 00000000000800FC F 00000100
+wait   %d200
+
+--rd 0000000000080000 F 00001234
+--wait   %d20
+--rd 0000000000080004 F 00005678
+--wait   %d20
+--rd 0000000000080008 F 0000abcd
+--wait   %d20
+--rd 000000000008000C F 0000ef90
+--wait   %d60
+--
+--wr 00000000000800FC F 00000001
+--wait   %d100
+--wr 00000000000800FC F 00000002
+--wait   %d100
+
+
+
+
+
+---- Gonzalo: registers inside Matthieu's core memory space are written with the
+---- settings for DMA transfer
+--
+---- Start address on the carrier local memory
+--wr 0000000000000008 F 00000000
+--wait   %d20
+--
+---- Start addresses on the PCI host memory
+--wr 000000000000000C F 0000A0A4
+--wait   %d20
+--wr 0000000000000010 F 0000A0A5
+--wait   %d20
+--
+---- Transfer length
+--wr 0000000000000014 F 00000060
+--wait   %d20
+--
+---- Chain control
+--wr 0000000000000020 F 00000000
+--wait   %d60
+--
+---- Start transfer through the Control register and check through the status register
+--wr 0000000000000000 F 00000001
+--wait   %d100
+--rd 0000000000000004 F 00000001
+--wait   %d100
+--
+--

@@ -1,0 +1,75 @@
+#              
+# Mezzanine top level pin assignment file:        
+# syntax: pin FMC_pin_name Core_Pin_name IO_Standard         
+# % is replaced with FMC number if the carrier supports more than 1 mezzanine
+#              
+
+mezzanine fmc-tdc-v3             
+
+pin clk0m2c_p ft%_acam_refclk_p_i lvds_25
+pin clk0m2c_n ft%_acam_refclk_n_i lvds_25          
+pin clk1m2c_p ft%_tdc_125m_clk_p_i lvds_25          
+pin clk1m2c_n ft%_tdc_125m_clk_n_i lvds_25          
+pin la_n30 ft%_tdc_led_trig1_o lvcmos25          
+pin la_p32 ft%_tdc_led_trig2_o lvcmos25           
+pin la_n32 ft%_tdc_led_trig3_o lvcmos25           
+pin la_p0 ft%_term_en_1_o lvcmos25      
+pin la_n0 ft%_term_en_2_o lvcmos25      
+pin la_p16 ft%_ef1_i lvcmos25
+pin la_n16 ft%_ef2_i lvcmos25           
+pin la_p20 ft%_term_en_3_o lvcmos25
+pin la_n20 ft%_term_en_4_o lvcmos25           
+pin la_p22 ft%_term_en_5_o lvcmos25           
+pin la_n22 ft%_tdc_led_status_o lvcmos25           
+pin la_p31 ft%_tdc_led_trig4_o lvcmos25           
+pin la_n31 ft%_tdc_led_trig5_o lvcmos25           
+pin la_p23 ft%_pll_sclk_o lvcmos25           
+pin la_n23 ft%_pll_dac_sync_n_o lvcmos25           
+pin la_p26 ft%_pll_cs_n_o lvcmos25           
+pin la_n26 ft%_cs_n_o lvcmos25           
+pin la_p15 ft%_err_flag_i lvcmos25           
+pin la_n15 ft%_int_flag_i lvcmos25           
+pin la_p25 ft%_start_dis_o lvcmos25           
+pin la_n25 ft%_stop_dis_o lvcmos25           
+pin la_n27 ft%_pll_sdo_i lvcmos25           
+pin la_n29 ft%_pll_status_i lvcmos25           
+pin la_p27 ft%_pll_sdi_o lvcmos25           
+pin la_p29 ft%_start_from_fpga_o lvcmos25           
+pin la_n14 ft%_data_bus_io[27] lvcmos25           
+pin la_p14 ft%_data_bus_io[26] lvcmos25           
+pin la_n13 ft%_data_bus_io[25] lvcmos25           
+pin la_p13 ft%_data_bus_io[24] lvcmos25           
+pin la_n11 ft%_data_bus_io[23] lvcmos25           
+pin la_p11 ft%_data_bus_io[22] lvcmos25           
+pin la_n12 ft%_data_bus_io[21] lvcmos25           
+pin la_p12 ft%_data_bus_io[20] lvcmos25           
+pin la_n10 ft%_data_bus_io[19] lvcmos25           
+pin la_p10 ft%_data_bus_io[18] lvcmos25           
+pin la_n9 ft%_data_bus_io[17] lvcmos25           
+pin la_p9 ft%_data_bus_io[16] lvcmos25           
+pin la_n7 ft%_data_bus_io[15] lvcmos25           
+pin la_p7 ft%_data_bus_io[14] lvcmos25           
+pin la_n5 ft%_data_bus_io[13] lvcmos25           
+pin la_p5 ft%_data_bus_io[12] lvcmos25           
+pin la_n8 ft%_data_bus_io[11] lvcmos25           
+pin la_p8 ft%_data_bus_io[10] lvcmos25           
+pin la_n6 ft%_data_bus_io[9] lvcmos25           
+pin la_p6 ft%_data_bus_io[8] lvcmos25           
+pin la_n1 ft%_data_bus_io[7] lvcmos25           
+pin la_n4 ft%_data_bus_io[6] lvcmos25           
+pin la_p1 ft%_data_bus_io[5] lvcmos25           
+pin la_p4 ft%_data_bus_io[4] lvcmos25           
+pin la_n3 ft%_data_bus_io[3] lvcmos25           
+pin la_p3 ft%_data_bus_io[2] lvcmos25           
+pin la_n2 ft%_data_bus_io[1] lvcmos25           
+pin la_p2 ft%_data_bus_io[0] lvcmos25           
+pin la_n19 ft%_address_o[3] lvcmos25           
+pin la_p19 ft%_address_o[2] lvcmos25           
+pin la_n18 ft%_address_o[1] lvcmos25           
+pin la_p18 ft%_address_o[0] lvcmos25           
+pin la_p21 ft%_oe_n_o lvcmos25           
+pin la_n17 ft%_rd_n_o lvcmos25           
+pin la_p17 ft%_wr_n_o lvcmos25           
+pin la_p33 ft%_enable_inputs_o lvcmos25
+pin la_n33 ft%_mezz_one_wire_b lvcmos25           
+#eof            

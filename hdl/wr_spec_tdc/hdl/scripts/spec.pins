@@ -1,0 +1,83 @@
+
+#
+# Carrier FMC pins description file
+#
+# Syntax: 
+# carrier carrier_name numeber_of_fmc_slots
+# pin FMC_Slot signal_name FPGA_pin
+
+carrier spec 1
+
+pin 0 clk1m2c_p L20 #
+pin 0 clk1m2c_n L22 #
+pin 0 clk0m2c_p E16 #
+pin 0 clk0m2c_n F16 #
+pin 0 la_p33 C19
+pin 0 la_p32 B20
+pin 0 la_p31 D17
+pin 0 la_p30 V17
+pin 0 la_p29 W17
+pin 0 la_p28 Y16
+pin 0 la_p27 AA18
+pin 0 la_p26 Y17
+pin 0 la_p25 T15
+pin 0 la_p24 W14
+pin 0 la_p23 AA16
+pin 0 la_p22 R13
+pin 0 la_p21 V13
+pin 0 la_p20 R11
+pin 0 la_p19 Y15
+pin 0 la_p18 T12
+pin 0 la_p17 Y13
+pin 0 la_p16 W12
+pin 0 la_p15 V11
+pin 0 la_p14 AA4
+pin 0 la_p13 Y9
+pin 0 la_p12 T10
+pin 0 la_p11 W10
+pin 0 la_p10 AA8
+pin 0 la_p9 Y7
+pin 0 la_p8 R9
+pin 0 la_p7 U9
+pin 0 la_p6 Y5
+pin 0 la_p5 AA6
+pin 0 la_p4 T8
+pin 0 la_p3 V7
+pin 0 la_p2 W6
+pin 0 la_p1 AA12
+pin 0 la_p0 Y11
+pin 0 la_n33 A19
+pin 0 la_n32 A20
+pin 0 la_n31 C18
+pin 0 la_n30 W18
+pin 0 la_n29 Y18
+pin 0 la_n28 W15
+pin 0 la_n27 AB18
+pin 0 la_n26 AB17
+pin 0 la_n25 U15
+pin 0 la_n24 Y14
+pin 0 la_n23 AB16
+pin 0 la_n22 T14
+pin 0 la_n21 W13
+pin 0 la_n20 T11
+pin 0 la_n19 AB15
+pin 0 la_n18 U12
+pin 0 la_n17 AB13
+pin 0 la_n16 Y12
+pin 0 la_n15 W11
+pin 0 la_n14 AB4 #
+pin 0 la_n13 AB9
+pin 0 la_n12 U10
+pin 0 la_n11 Y10
+pin 0 la_n10 AB8
+pin 0 la_n9 AB7
+pin 0 la_n8 R8
+pin 0 la_n7 V9
+pin 0 la_n6 AB5 #
+pin 0 la_n5 AB6 #
+pin 0 la_n4 U8 #
+pin 0 la_n3 W8 #
+pin 0 la_n2 Y6 #
+pin 0 la_n1 AB12 #
+pin 0 la_n0 AB11 #
+#eof

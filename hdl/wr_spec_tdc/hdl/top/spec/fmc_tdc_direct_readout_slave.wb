@@ -1,0 +1,79 @@
+peripheral 
+{
+   name = "TDC Direct Readout WB Slave";
+   hdl_entity = "fmc_tdc_direct_readout_wb_slave";
+   prefix = "dr";
+
+   fifo_reg {
+      name = "Readout FIFO";
+      prefix = "FIFO";
+      direction = CORE_TO_BUS;
+      size = 256;
+
+      flags_bus = {FIFO_EMPTY, FIFO_FULL, FIFO_COUNT, FIFO_RESET};
+      flags_dev = {FIFO_EMPTY, FIFO_FULL, FIFO_COUNT, FIFO_RESET};
+
+      clock = "clk_tdc_i";
+
+      field {
+         name = "Seconds";
+	 prefix = "SECONDS";
+         type = SLV;
+         size = 32;
+      };
+
+      field {
+         name = "Cycles";
+	 prefix = "CYCLES";
+         type = SLV;
+         size = 32;
+      };
+
+      field {
+         name = "Bins";
+	 prefix = "BINS";
+         type = SLV;
+         size = 18;
+      };
+
+      field {
+         name = "Edge";
+	 prefix = "EDGE";
+         type = BIT;
+      };
+
+      field {
+         name = "Channel";
+	 prefix = "CHANNEL";
+         type = SLV;
+	 size = 4;
+      };
+   };
+
+   reg {
+      name = "Channel Enable Register";
+      prefix = "CHAN_ENABLE";
+      clock = "clk_tdc_i";
+      field {
+         name = "Channel enable";
+         size = 5;
+         type = SLV;
+	 access_bus = READ_WRITE;
+	 access_dev = READ_ONLY;
+      };
+   };
+
+   reg {
+      name = "Dead Time Register";
+      prefix = "DEAD_TIME";
+      clock = "clk_tdc_i";
+
+      field {
+         name = "Dead time (8ns ticks)";
+         size = 24;
+         type = SLV;
+	 access_bus = READ_WRITE;
+	 access_dev = READ_ONLY;
+      };
+   };
+};
