@@ -5,3 +5,5 @@ files = ["fmc_tdc_wrapper.vhd",
          "fmc_tdc_direct_readout_slave_pkg.vhd"
 ];
 
+modules = {"local" : [ "../../platform/xilinx" ] }
+
