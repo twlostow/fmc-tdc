@@ -326,7 +326,7 @@ begin
                         acam_stb        <= '1';
                         acam_we         <= '0';
                         time_c_en       <= '1';
-						time_c_rst      <= '0';
+                        time_c_rst      <= '0';
                   -----------------------------------------------
 
                         if acam_ack_i ='1' then
@@ -343,7 +343,7 @@ begin
                         acam_stb        <= '0';
                         acam_we         <= '0';
                         time_c_en       <= '1';
-						time_c_rst      <= '0';
+                        time_c_rst      <= '0';
 						-----------------------------------------------
 
                         if time_c_full_p ='1' then
@@ -359,7 +359,7 @@ begin
                         acam_stb        <= '0';
                         acam_we         <= '0';
                         time_c_en       <= '0';
-         				time_c_rst      <= '1';
+                        time_c_rst      <= '1';
                   -----------------------------------------------
 
                         if deactivate_acq_p_i = '1' then
@@ -411,7 +411,7 @@ begin
                         acam_cyc        <= '1';
                         acam_stb        <= '1';
                         acam_we         <= '0';
-                                                time_c_en <= '0';
+                        time_c_en <= '0';
                         time_c_rst <= '0';
 
                   -----------------------------------------------
@@ -441,7 +441,7 @@ begin
                         acam_cyc        <= '1';
                         acam_stb        <= '1';
                         acam_we         <= '1';
-                                                time_c_en <= '0';
+                        time_c_en <= '0';
                         time_c_rst <= '0';
 
                   -----------------------------------------------
@@ -459,7 +459,7 @@ begin
                         acam_cyc        <= '1';
                         acam_stb        <= '1';
                         acam_we         <= '0';
-                                                time_c_en <= '0';
+                        time_c_en <= '0';
                         time_c_rst <= '0';
 
                   -----------------------------------------------
@@ -477,7 +477,9 @@ begin
                         acam_cyc        <= '1';
                         acam_stb        <= '1';
                         acam_we         <= '0';
-                  -----------------------------------------------
+                        time_c_en <= '0';
+                        time_c_rst <= '0';
+                        -----------------------------------------------
 
                         if acam_ack_i ='1' then
                           nxt_engine_st   <= INACTIVE;
@@ -492,7 +494,7 @@ begin
                         acam_cyc        <= '1';
                         acam_stb        <= '1';
                         acam_we         <= '0';
-                                                time_c_en <= '0';
+                        time_c_en <= '0';
                         time_c_rst <= '0';
 
                   -----------------------------------------------
@@ -510,7 +512,7 @@ begin
                         acam_cyc        <= '1';
                         acam_stb        <= '1';
                         acam_we         <= '0';
-                                                time_c_en <= '0';
+                        time_c_en <= '0';
                         time_c_rst <= '0';
 
                   -----------------------------------------------
@@ -527,7 +529,7 @@ begin
                         acam_cyc        <= '1';
                         acam_stb        <= '1';
                         acam_we         <= '1';
-                                                time_c_en <= '0';
+                        time_c_en <= '0';
                         time_c_rst <= '0';
 
                   -----------------------------------------------
@@ -544,7 +546,7 @@ begin
                         acam_cyc        <= '0';
                         acam_stb        <= '0';
                         acam_we         <= '0';
-                                                time_c_en <= '0';
+                        time_c_en <= '0';
                         time_c_rst <= '0';
 
                   -----------------------------------------------

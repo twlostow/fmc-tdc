@@ -115,7 +115,7 @@ begin
           c(i).enable <= regs_out.chan_enable_o(i);
 
           if c(i).enable = '1' then
-            if unsigned(ts_channel) = i and ts_edge = '1' and c(i).timeout = 0 then
+            if direct_timestamp_wr_i = '1' and unsigned(ts_channel) = i and ts_edge = '1' and c(i).timeout = 0 then
               c(i).timeout <= unsigned(regs_out.dead_time_o);
               c(i).fifo_wr <= '1';
             elsif c(i).timeout /= 0 then
