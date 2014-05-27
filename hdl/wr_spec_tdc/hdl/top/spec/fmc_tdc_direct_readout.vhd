@@ -67,8 +67,11 @@ architecture rtl of fmc_tdc_direct_readout is
   signal ts_bins    : std_logic_vector(17 downto 0);
   signal ts_edge    : std_logic;
   signal ts_channel : std_logic_vector(2 downto 0);
+
+  signal direct_slave_out: t_wishbone_slave_out;
   
 begin
+
 
   ts_channel <= direct_timestamp_i(98 downto 96);
   ts_edge    <= direct_timestamp_i(100);
@@ -82,25 +85,28 @@ begin
       clk_sys_i  => clk_sys_i,
       wb_adr_i   => direct_slave_i.adr(4 downto 2),
       wb_dat_i   => direct_slave_i.dat,
-      wb_dat_o   => direct_slave_o.dat,
+      wb_dat_o   => direct_slave_out.dat,
       wb_cyc_i   => direct_slave_i.cyc,
       wb_sel_i   => direct_slave_i.sel,
       wb_stb_i   => direct_slave_i.stb,
       wb_we_i    => direct_slave_i.we,
-      wb_ack_o   => direct_slave_o.ack,
-      wb_stall_o => direct_slave_o.stall,
+      wb_ack_o   => direct_slave_out.ack,
+      wb_stall_o => direct_slave_out.stall,
       clk_tdc_i  => clk_tdc_i,
       regs_i     => regs_in,
       regs_o     => regs_out);
 
-  direct_slave_o.err <= '0';
-  direct_slave_o.rty <= '0';
+  direct_slave_out.err <= '0';
+  direct_slave_out.rty <= '0';
+
+  direct_slave_o <= direct_slave_out;
 
   regs_in.fifo_cycles_i  <= ts_cycles;
   regs_in.fifo_edge_i    <= '1';
   regs_in.fifo_seconds_i <= ts_seconds;
   regs_in.fifo_channel_i <= '0'&ts_channel;
   regs_in.fifo_bins_i    <= ts_bins;
+
 
   gen_channels : for i in 0 to c_num_channels-1 generate
 
@@ -139,12 +145,17 @@ begin
       if rst_tdc_n_i = '0' then
         regs_in.fifo_wr_req_i <= '0';
       else
+        regs_in.fifo_wr_req_i <= '0';
+
         for i in 0 to c_num_channels-1 loop
-          regs_in.fifo_wr_req_i <= c(i).fifo_wr and not regs_out.fifo_wr_full_o;
+          if(c(i).fifo_wr = '1' and regs_out.fifo_wr_full_o = '0') then
+            regs_in.fifo_wr_req_i <= '1';
+          end if;
         end loop;
       end if;
     end if;
   end process;
 
 end rtl;
+
 
