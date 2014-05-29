@@ -214,7 +214,9 @@ entity fmc_tdc_wrapper is
       direct_slave_i : in  t_wishbone_slave_in;
       direct_slave_o : out t_wishbone_slave_out;
 
-      irq_o : out std_logic
+      irq_o : out std_logic;
+
+      clk_125m_tdc_o: out std_logic
       );                                -- Mezzanine presence (active low)
 
 end fmc_tdc_wrapper;
@@ -289,6 +291,7 @@ begin
   pll_sdi_o       <= pll_sdi;
   pll_sclk_o      <= pll_sclk;
 
+  clk_125m_tdc_o <= clk_125m_mezz;
 ---------------------------------------------------------------------------------------------------
 --                                            TDC BOARD                                          --
 ---------------------------------------------------------------------------------------------------

@@ -1070,7 +1070,8 @@ package tdc_core_pkg is
       direct_slave_i : in  t_wishbone_slave_in;
       direct_slave_o : out t_wishbone_slave_out;
 
-      irq_o : out std_logic);
+      irq_o : out std_logic;
+      clk_125m_tdc_o: out std_logic);
   end component fmc_tdc_wrapper;
 
   component fmc_tdc_direct_readout is
