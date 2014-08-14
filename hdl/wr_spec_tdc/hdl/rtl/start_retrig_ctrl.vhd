@@ -91,14 +91,16 @@
 --                                                                                                |
 -- Authors      Gonzalo Penacoba  (Gonzalo.Penacoba@cern.ch)                                      |
 --              Evangelia Gousiou (Evangelia.Gousiou@cern.ch)                                     |
--- Date         04/2012                                                                           |
--- Version      v0.11                                                                             |
+-- Date         04/2014                                                                           |
+-- Version      v1                                                                                |
 -- Depends on                                                                                     |
 --                                                                                                |
 ----------------                                                                                  |
 -- Last changes                                                                                   |
 --     07/2011  v0.1  GP  First version                                                           |
 --     04/2012  v0.11 EG  Revamping; Comments added, signals renamed                              |
+--     04/2014  v1    EG  Changed roll_over_counter to add rare case where utc_p_i and            |
+--                        acam_intflag_f_edge_p_i arrive at the same time                         |
 ---------------------------------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------------------------------
@@ -113,7 +115,6 @@
 -- You should have received a copy of the GNU Lesser General Public License along with this       |
 -- source; if not, download it from http://www.gnu.org/licenses/lgpl-2.1.html                     |
 ---------------------------------------------------------------------------------------------------
-
 
 
 --=================================================================================================
@@ -145,7 +146,6 @@ entity start_retrig_ctrl is
      acam_intflag_f_edge_p_i : in std_logic;
      -- Signal from the one_hz_generator unit
      utc_p_i                 : in std_logic;
-
   -- OUTPUTS
      -- Signals to the data_formatting unit
 	 current_retrig_nb_o     : out std_logic_vector(g_width-1 downto 0);
@@ -153,12 +153,13 @@ entity start_retrig_ctrl is
      clk_i_cycles_offset_o   : out std_logic_vector(g_width-1 downto 0);
      roll_over_nb_o          : out std_logic_vector(g_width-1 downto 0);
      retrig_nb_offset_o      : out std_logic_vector(g_width-1 downto 0));
-
 end start_retrig_ctrl;
+
 
 --=================================================================================================
 --                                    architecture declaration
 --=================================================================================================
+
 
 architecture rtl of start_retrig_ctrl is
 
@@ -167,7 +168,8 @@ architecture rtl of start_retrig_ctrl is
   signal current_retrig_nb   : std_logic_vector(g_width-1 downto 0);
   signal retrig_nb_offset    : std_logic_vector(g_width-1 downto 0);
   signal retrig_p            : std_logic;
-  signal roll_over_c         : std_logic_vector(g_width-1 downto 0);
+  signal roll_over_c         : unsigned(g_width-1 downto 0);
+
 
 --=================================================================================================
 --                                       architecture begin
@@ -180,7 +182,6 @@ begin
 -- IrFlag_f_edge_p  :  ______________________________________|-|________________________________________|-|________
 -- retrig_p         : |-|__|-|__ ... __|-|__|-|__ ... __|-|__|-|__|-|__ ...__|-|__|-|__|-|___ ...__|-|__|-|__|-|___
 -- current_retrig_nb:  0    1          127  128         255   0    1         127  128  129         255   0    1
-
 -- utc_p_i       : _____________________|-|_______________________________________________________________
 -- roll_over_c      :                       0                 1                                          2
 -- retrig_nb_offset :                      127
@@ -211,7 +212,6 @@ begin
 -- Finally, note that the the current_cycles counter is a decreasing counter giving the amount of
 -- clk_i cycles between the resing edge of the one_hz_pulse_i and the next retrigger. 
 -- Note that in this project we are only interested in time differences between 
-
 --                    _______________________________________  _________________________________________       ____________________
 -- utc_p_i           |                           _|-|_       ||                                         |     |
 -- ACAM Stop pulse   |                                       ||                                         |     |       _|-|_
@@ -224,15 +224,15 @@ begin
 --                                                |-----------------------------------------------------------|
 --                                                                                                                (3)
 --                                                                                                            |--------|
-
 --                  (1): ((retrig_nb_offset + 1) * retrig_period) - (clk_i_cycles_offset)
 --                  (2): (roll_over_c * 256 * retrig_period) - (the amount that (1) represents)
 --                  (3): from ACAM tstamps: (Start# * retrig_period) + (Fine time: Hit)
 
 --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
+
+
 -- These two counters keep a track of the current internal start retrigger
 -- of the ACAM in parallel with the ACAM itself. Counting up to c_ACAM_RETRIG_PERIOD = 64
-
  retrig_period_counter: free_counter  -- retrigger periods
    generic map
      (width             => g_width)
@@ -259,20 +259,25 @@ begin
        counter_o         => current_retrig_nb);
      -------------------------------------------
 
-
 --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
   -- This counter keeps track of the number of overflows of the ACAM counter within one second
-  roll_over_counter: incr_counter
-    generic map
-      (width             => g_width)
-    port map
-      (clk_i             => clk_i,
-       rst_i             => utc_p_i,  
-       counter_top_i     => x"FFFFFFFF",
-       counter_incr_en_i => acam_intflag_f_edge_p_i,
-       counter_is_full_o => open,
-       counter_o         => roll_over_c);
-	   
+  roll_over_counter: process (clk_i)
+  begin
+    if rising_edge (clk_i) then
+      if utc_p_i = '1' and acam_intflag_f_edge_p_i = '0' then
+        roll_over_c   <= x"00000000";
+
+       -- the following case covers the rare possibility when utc_p_i and acam_intflag_f_edge_p_i
+       -- arrive on the exact same moment 
+	   elsif utc_p_i = '1' and acam_intflag_f_edge_p_i = '1' then
+        roll_over_c   <= x"00000001";
+		
+      elsif acam_intflag_f_edge_p_i = '1' then
+        roll_over_c <= roll_over_c + "1";
+      end if;
+    end if;
+  end process;
+
 --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
   -- When a new second starts, all values are captured and stored as offsets.
   -- when a timestamp arrives, these offsets will be subtracted in order
@@ -288,19 +293,20 @@ begin
         clk_i_cycles_offset <= current_cycles;
         retrig_nb_offset    <= current_retrig_nb;
       end if;
-
     end if;
   end process;
+
 --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --    
   -- outputs
   roll_over_incr_recent_o <= '1' when unsigned(current_retrig_nb) < 64 else '0';
   clk_i_cycles_offset_o   <= clk_i_cycles_offset;
   retrig_nb_offset_o      <= retrig_nb_offset;
-  roll_over_nb_o          <= roll_over_c;
-  current_retrig_nb_o     <= current_retrig_nb; ----------------
-
+  roll_over_nb_o          <= std_logic_vector(roll_over_c);
+  current_retrig_nb_o     <= current_retrig_nb; -- for debug
 
 end architecture rtl;
+
+
 --=================================================================================================
 --                                        architecture end
 --=================================================================================================

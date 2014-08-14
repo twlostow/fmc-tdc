@@ -12,16 +12,16 @@
 ---------------------------------------------------------------------------------------------------
 -- File         irq_generator.vhd                                                                 |
 --                                                                                                |
--- Description  Interrupts generator: the unit generates three interrups:                         |
+-- Description  Interrupts generator: the unit generates three interrupts:                        |
 --                                                                                                |
 --                o irq_tstamp_p_o is a 1-clk_i-long pulse generated when the amount of           |
 --                  timestamps written in the circular_buffer, since the last interrupt or since  |
---                  the startup of the aquisition, exceeds the GN4124/VME settable threshold      |
+--                  the startup of the acquisition, exceeds the GN4124/VME settable threshold     |
 --                  irq_tstamp_threshold.                                                         |
 --                                                                                                |
 --                o irq_time_p_o is a 1-clk_i-long pulse generated when some timestamps have been |
 --                  written in the circular_buffer (>=1 timestamp) and the amount of time passed  |
---                  since the last interrupt or since the aquisition startup, exceeds the         |
+--                  since the last interrupt or since the acquisition startup, exceeds the        |
 --                  GN4124/VME settable threshold irq_time_threshold. The threshold is in ms.     |
 --                                                                                                |
 --                o irq_acam_err_p_o is a 1-clk_i-long pulse generated when the ACAM Hit FIFOS are|
@@ -91,8 +91,8 @@ entity irq_generator is
                                                                         -- the ERRflag is configured to follow the full flags of the
                                                                         -- Hit FIFOs; this would translate to data loss
      -- Signal from the reg_ctrl unit 
-     activate_acq_p_i        : in std_logic;                            -- activates tstamps aquisition from ACAM
-     deactivate_acq_p_i      : in std_logic;                            -- deactivates tstamps aquisition
+     activate_acq_p_i        : in std_logic;                            -- activates tstamps acquisition from ACAM
+     deactivate_acq_p_i      : in std_logic;                            -- deactivates tstamps acquisition
 
      -- Signals from the data_formatting unit
      tstamp_wr_p_i           : in std_logic;                            -- pulse upon storage of a new timestamp
@@ -241,7 +241,7 @@ begin
 -- last reset. The counter counts up to 255.
   tstamps_counter: incr_counter
     generic map
-      (width             => 9)--(c_CIRCULAR_BUFF_SIZE'length)) -- 9 digits, counting up to 255
+      (width             => 9) -- 9 digits, counting up to 255
     port map
       (clk_i             => clk_i,
        rst_i             => tstamps_c_rst,  

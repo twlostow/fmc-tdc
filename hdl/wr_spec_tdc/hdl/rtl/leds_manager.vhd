@@ -18,15 +18,35 @@
 --                                       |      |                                                 |
 --                                       | O  O |   1, 2                                          |
 --                                       | O  O |   3, 4                                          |
---                                       | O  O |   5, 6                                          |
+--                                       | O  O |   5, STA                                        |
 --                                       |______|                                                 |
 --                                                                                                |
---              TDC LED  1 orange: division of the 125 MHz clock; one hz pulses                   |
---              TDC LED  2 orange: Channel 1 termination enable                                   |
---              TDC LED  3 orange: Channel 2 termination enable                                   |
---              TDC LED  4 orange: Channel 3 termination enable                                   |
---              TDC LED  5 orange: Channel 4 termination enable                                   |
---              TDC LED  6 orange: Channel 5 termination enable                                   |
+--              TDC LED  1 orange :blink upon timestamp registration for Channel 1;               |
+--                                 if the input termination for Channel 1 is ON, there is a       |
+--                                 blinking of the LED when the timestamp is written in the buffer|
+--                                 if the input termination for Channel 1 is OFF,the LED is always|
+--                                 ON and it turns OFF when the timestamp is written in the buffer|
+--              TDC LED  2 orange: blink upon timestamp registration for Channel 2;               |
+--                                 if the input termination for Channel 2 is ON, there is a       |
+--                                 blinking of the LED when the timestamp is written in the buffer|
+--                                 if the input termination for Channel 2 is OFF,the LED is always|
+--                                 ON and it turns OFF when the timestamp is written in the buffer|
+--              TDC LED  3 orange: blink upon timestamp registration for Channel 2;               |
+--                                 if the input termination for Channel 3 is ON, there is a       |
+--                                 blinking of the LED when the timestamp is written in the buffer|
+--                                 if the input termination for Channel 3 is OFF,the LED is always|
+--                                 ON and it turns OFF when the timestamp is written in the buffer|
+--              TDC LED  4 orange: blink upon timestamp registration for Channel 4;               |
+--                                 if the input termination for Channel 4 is ON, there is a       |
+--                                 blinking of the LED when the timestamp is written in the buffer|
+--                                 if the input termination for Channel 4 is OFF,the LED is always|
+--                                 ON and it turns OFF when the timestamp is written in the buffer|
+--              TDC LED  5 orange: blink upon timestamp registration for Channel 5;               |
+--                                 if the input termination for Channel 5 is ON, there is a       |
+--                                 blinking of the LED when the timestamp is written in the buffer|
+--                                 if the input termination for Channel 5 is OFF,the LED is always|
+--                                 ON and it turns OFF when the timestamp is written in the buffer|
+--              TDC LED STA orange:division of the 125 MHz clock; one hz pulses                   |
 --                                                                                                |
 -- Authors      Gonzalo Penacoba  (Gonzalo.Penacoba@cern.ch)                                      |
 -- Date         05/2012                                                                           |
@@ -66,7 +86,6 @@ use work.tdc_core_pkg.all;   -- definitions of types, constants, entities
 use work.gencores_pkg.all;
 
 
-
 --=================================================================================================
 --                            Entity declaration for leds_manager
 --=================================================================================================
@@ -89,8 +108,8 @@ entity leds_manager is
                                                                   -- activation comes through dedicated reg c_ACAM_INPUTS_EN_ADR
 
      -- Signal for debugging
-     acam_channel_i        : in std_logic_vector(5 downto 0);         -- for debugging, currently not used
-     tstamp_wr_p_i     : in std_logic;
+     acam_channel_i    : in std_logic_vector(5 downto 0);         -- identification of the channel for which a timestamp has arrived
+     tstamp_wr_p_i     : in std_logic;                            -- pulse upon the writing of the timestamp in the circular buffer
 
 
   -- OUTPUTS
@@ -160,11 +179,31 @@ begin
   led_1to5_outputs: process (clk_i)
   begin
     if rising_edge (clk_i) then
-      tdc_led_trig1_o  <= blink_led1; --acam_inputs_en_i(0) and blink_led1;
-      tdc_led_trig2_o  <= blink_led2; --acam_inputs_en_i(1) and blink_led2;
-      tdc_led_trig3_o  <= blink_led3; --acam_inputs_en_i(2) and blink_led3;
-      tdc_led_trig4_o  <= blink_led4; --acam_inputs_en_i(3) and blink_led4;
-      tdc_led_trig5_o  <= blink_led5; --acam_inputs_en_i(4) and blink_led5;
+      if acam_inputs_en_i(0) = '1' then
+        tdc_led_trig1_o  <= blink_led1;
+      else
+        tdc_led_trig1_o  <= not blink_led1;
+      end if;
+      if acam_inputs_en_i(1) = '1' then
+        tdc_led_trig2_o  <= blink_led2;
+      else
+        tdc_led_trig2_o  <= not blink_led2;
+      end if;
+      if acam_inputs_en_i(2) = '1' then
+        tdc_led_trig3_o  <= blink_led3;
+      else
+        tdc_led_trig3_o  <= not blink_led3;
+      end if;
+      if acam_inputs_en_i(3) = '1' then
+        tdc_led_trig4_o  <= blink_led4;
+      else
+        tdc_led_trig4_o  <= not blink_led4;
+      end if;
+      if acam_inputs_en_i(4) = '1' then
+        tdc_led_trig5_o  <= blink_led5;
+      else
+        tdc_led_trig5_o  <= not blink_led5;
+      end if;
     end if;
   end process;
 

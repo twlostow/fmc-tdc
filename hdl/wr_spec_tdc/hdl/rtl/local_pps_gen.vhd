@@ -15,6 +15,8 @@
 -- Description  Generates one pulse every second synchronously with the ACAM reference clock.     |
 --              The phase with the reference clock can be adjusted (eva: think that is not needed)|
 --              It also keeps track of the UTC time based on the local clock.                     |
+--              If there is no White Rabbit synchronization, this unit is the source of UTC timing|
+--              in the design.
 --                                                                                                |
 --                                                                                                |
 -- Authors      Gonzalo Penacoba  (Gonzalo.Penacoba@cern.ch)                                      |

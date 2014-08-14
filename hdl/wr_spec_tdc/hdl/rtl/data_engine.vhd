@@ -35,15 +35,18 @@
 --                                                                                                |
 -- Authors      Gonzalo Penacoba  (Gonzalo.Penacoba@cern.ch)                                      |
 --              Evangelia Gousiou (Evangelia.Gousiou@cern.ch)                                     |
--- Date         04/2012                                                                           |
--- Version      v0.11                                                                             |
+-- Date         04/2014                                                                           |
+-- Version      v1                                                                                |
 -- Depends on                                                                                     |
 --                                                                                                |
 ----------------                                                                                  |
 -- Last changes                                                                                   |
 --     06/2011  v0.1  GP  First version                                                           |
 --     04/2012  v0.11 EG  Revamping; Comments added, signals renamed                              |
---     14/2014  v1    EG  added state RD_START01                                                  |
+--     04/2014  v1    EG  added states for reading the  RD_START01 (currently though the start01  |
+--                        is not essential absolute timestamp calculations). added wait state     |
+--                        before starting receiving timestamps, to ensure that the start pulse has|
+--                        been sent and the ACAM IRflag has toggled once                          |
 --                                                                                                |
 ---------------------------------------------------------------------------------------------------
 
@@ -145,7 +148,8 @@ end data_engine;
 architecture rtl of data_engine is
 
   type engine_state_ty is (ACTIVE, INACTIVE, GET_STAMP1, GET_STAMP2, WR_CONFIG, RDBK_CONFIG,
-                           RD_STATUS, RD_IFIFO1, RD_IFIFO2, RD_START01, WR_RESET, WAIT_FOR_START01, WAIT_START_FROM_FPGA, WAIT_UTC);
+                           RD_STATUS, RD_IFIFO1, RD_IFIFO2, RD_START01, WR_RESET,
+                           WAIT_FOR_START01, WAIT_START_FROM_FPGA, WAIT_UTC);
   signal engine_st, nxt_engine_st    : engine_state_ty;
 
   signal acam_cyc, acam_stb, acam_we : std_logic;
@@ -194,7 +198,8 @@ begin
   data_engine_fsm_comb: process (engine_st, activate_acq_p_i, deactivate_acq_p_i, acam_ef1_i, acam_adr,
                                  acam_ef2_i, acam_ef1_meta_i, acam_ef2_meta_i, acam_wr_config_p_i,
                                  acam_rdbk_config_p_i, acam_rdbk_status_p_i, acam_ack_i, acam_rst_p_i,
-                                 acam_rdbk_ififo1_p_i, acam_rdbk_ififo2_p_i, acam_rdbk_start01_p_i)
+                                 acam_rdbk_ififo1_p_i, acam_rdbk_ififo2_p_i, acam_rdbk_start01_p_i,
+											start_from_fpga_i, time_c, time_c_full_p)
   begin
     case engine_st is
 
@@ -246,7 +251,7 @@ begin
       -- ACTIVE, GET_STAMP1, GET_STAMP2: intensive acquisition of timestamps from ACAM.
       -- ACAM can receive and tag pulses with an overall rate up to 31.25 MHz;
       -- therefore locally, running with a 125 MHz clk, in order to be able to receive timestamps
-      -- as fast as they arrive, it is needed to use up to 4 clk cycles to retreive each of them.
+      -- as fast as they arrive, it is needed to use up to 4 clk cycles to retrieve each of them.
       -- Timestamps are received as soon as the ef1, ef2 flags are at zero (indicating that the
       -- iFIFOs are not empty!). In order to avoid metastabilities locally, the ef signals are
       -- synchronized using a set of two registers.
@@ -267,7 +272,7 @@ begin
       -- = 16 ns after an rdn falling edge the ef_synch1 should be stable.
       -- 
       -- Using the ef_synch1 signal instead of the ef_synch2 makes it possible to realise
-      -- timestamps' aquisitions from ACAM in just 4 clk cycles.
+      -- timestamps' acquisitions from ACAM in just 4 clk cycles.
       -- clk           --|__|--|__|--|__|--|__|--|__|--|__|--|__|--|__|--|__|--|__|--|__|--|__|--|__
       -- ef            ------|_______________________________________________________|--------------
       -- ef_meta       -----------|_____________________________________________________|-----------
@@ -303,7 +308,7 @@ begin
 
 
 
-      when WAIT_FOR_START01 => -- wait for some time until the acam Start01 is available
+      when WAIT_FOR_START01 => -- wait for some time until the ACAM Start01 is available
                   -----------------------------------------------
                         acam_cyc        <= '0';
                         acam_stb        <= '0';
@@ -320,13 +325,13 @@ begin
 
 
 
-      when RD_START01 => -- read now the acam Start01
+      when RD_START01 => -- read now the ACAM Start01
                   -----------------------------------------------
                         acam_cyc        <= '1';
                         acam_stb        <= '1';
                         acam_we         <= '0';
                         time_c_en       <= '1';
-                        time_c_rst      <= '0';
+						time_c_rst      <= '0';
                   -----------------------------------------------
 
                         if acam_ack_i ='1' then
@@ -336,14 +341,14 @@ begin
                         end if;
 						
 						
-      when WAIT_UTC => -- wait until the next utc comes; now the offsets of the start_retrig_ctrl unit are defined
-	                   -- the acam is disabled during this period
+      when WAIT_UTC => -- wait until the next UTC comes; now the offsets of the start_retrig_ctrl unit are defined
+	                   -- the ACAM is disabled during this period
                   -----------------------------------------------
                         acam_cyc        <= '0';
                         acam_stb        <= '0';
                         acam_we         <= '0';
                         time_c_en       <= '1';
-                        time_c_rst      <= '0';
+						time_c_rst      <= '0';
 						-----------------------------------------------
 
                         if time_c_full_p ='1' then
@@ -359,7 +364,7 @@ begin
                         acam_stb        <= '0';
                         acam_we         <= '0';
                         time_c_en       <= '0';
-                        time_c_rst      <= '1';
+         				time_c_rst      <= '1';
                   -----------------------------------------------
 
                         if deactivate_acq_p_i = '1' then
@@ -385,7 +390,7 @@ begin
                   -----------------------------------------------
                         time_c_en <= '0';
                         time_c_rst <= '0';
-                        
+
                         if deactivate_acq_p_i = '1' then
                           nxt_engine_st   <= INACTIVE;
 
@@ -412,9 +417,7 @@ begin
                         acam_stb        <= '1';
                         acam_we         <= '0';
                         time_c_en <= '0';
-                        time_c_rst <= '0';
-
-                  -----------------------------------------------
+                        time_c_rst <= '0';                  -----------------------------------------------
 
                         if deactivate_acq_p_i = '1' then
                           nxt_engine_st   <= INACTIVE;
@@ -443,8 +446,7 @@ begin
                         acam_we         <= '1';
                         time_c_en <= '0';
                         time_c_rst <= '0';
-
-                  -----------------------------------------------
+                -----------------------------------------------
 
                         if acam_ack_i = '1' and acam_adr = x"0E" then  -- last address
                           nxt_engine_st   <= INACTIVE;
@@ -460,9 +462,7 @@ begin
                         acam_stb        <= '1';
                         acam_we         <= '0';
                         time_c_en <= '0';
-                        time_c_rst <= '0';
-
-                  -----------------------------------------------
+                        time_c_rst <= '0';                 -----------------------------------------------
 
                         if acam_ack_i = '1' and acam_adr = x"0E" then  -- last address
                           nxt_engine_st   <= INACTIVE;
@@ -478,8 +478,8 @@ begin
                         acam_stb        <= '1';
                         acam_we         <= '0';
                         time_c_en <= '0';
-                        time_c_rst <= '0';
-                        -----------------------------------------------
+                        time_c_rst <= '0';                 
+						-----------------------------------------------
 
                         if acam_ack_i ='1' then
                           nxt_engine_st   <= INACTIVE;
@@ -496,7 +496,6 @@ begin
                         acam_we         <= '0';
                         time_c_en <= '0';
                         time_c_rst <= '0';
-
                   -----------------------------------------------
 
                         if acam_ack_i ='1' then
@@ -514,7 +513,6 @@ begin
                         acam_we         <= '0';
                         time_c_en <= '0';
                         time_c_rst <= '0';
-
                   -----------------------------------------------
 
                         if acam_ack_i ='1' then
@@ -531,7 +529,6 @@ begin
                         acam_we         <= '1';
                         time_c_en <= '0';
                         time_c_rst <= '0';
-
                   -----------------------------------------------
 
                         if acam_ack_i ='1' then
@@ -548,7 +545,6 @@ begin
                         acam_we         <= '0';
                         time_c_en <= '0';
                         time_c_rst <= '0';
-
                   -----------------------------------------------
 
                         nxt_engine_st     <= INACTIVE;
@@ -705,12 +701,12 @@ begin
 
 
 ---------------------------------------------------------------------------------------------------
---                      Aquisition of ACAM Timestamps or Reedback Registers                      --
+--                      Acquisition of ACAM Timestamps or Reedback Registers                     --
 ---------------------------------------------------------------------------------------------------
 --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
 -- data_readback_decoder: after reading accesses to the ACAM (acam_we=0), the process recuperates
 -- the ACAM data and according to the acam_adr_o stores them to the corresponding registers.
--- In the case of timestamps aquisition, the acam_tstamp1_ok_p_o, acam_tstamp2_ok_p_o pulses are
+-- In the case of timestamps acquisition, the acam_tstamp1_ok_p_o, acam_tstamp2_ok_p_o pulses are
 -- generated that when active, indicate a valid timestamp. Note that for timing reasons
 -- the signals acam_tstamp1_o, acam_tstamp2_o are not the outputs of flip-flops.
 

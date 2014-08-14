@@ -53,10 +53,9 @@ use work.gencores_pkg.all;
 
 entity wrabbit_sync is
 
-  generic (
-    -- when true, reduces some timeouts to speed up simulations
-    g_simulation   : boolean;
-    g_with_wrabbit_core : boolean);
+  generic
+    (g_simulation        : boolean; -- when true, reduces some timeouts to speed up simulations
+     g_with_wrabbit_core : boolean);
   port(
     clk_sys_i   : in std_logic;
     rst_n_sys_i : in std_logic;
@@ -94,10 +93,10 @@ entity wrabbit_sync is
 
 end wrabbit_sync;
 
-architecture behavioral of wrabbit_sync is
+architecture rtl of wrabbit_sync is
 
   -- System clock frequency in Hz
-  constant c_SYS_CLK_FREQ : integer        := 125000000;
+  constant c_SYS_CLK_FREQ : integer        := 62500000;
   -- FSM timeout period calculation
   impure function f_eval_timeout return integer is
   begin
@@ -113,7 +112,6 @@ architecture behavioral of wrabbit_sync is
   type   t_wrabbit_sync_state is (wrabbit_CORE_OFFLINE, wrabbit_WAIT_READY, wrabbit_SYNCING, wrabbit_SYNCED);
   signal wrabbit_state                     : t_wrabbit_sync_state;
   signal wrabbit_state_changed             : std_logic;
-  signal csync_wrabbit_sysclk              : std_logic;
   signal wrabbit_state_syncing, wrabbit_en : std_logic;
   signal wrabbit_clk_aux_lock_en           : std_logic;
     -- FSM timeout counter
@@ -124,27 +122,28 @@ architecture behavioral of wrabbit_sync is
   signal clk_aux_locked, link_up           : std_logic_vector (1 downto 0);
   signal state_syncing, clk_aux_lock_en    : std_logic_vector (1 downto 0);
   -- aux
-  signal dac_p_c                           : unsigned(23 downto 0);
+  signal with_wrabbit_core                 : std_logic;
+  signal dac_p_c                           : unsigned(23 downto 0); -- for debug
 
   
-begin  -- behavioral
+begin
 
-  p_dac_p_counter : process(clk_sys_i)
+  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
+  -- Synchronization of the wrabbit_reg_i(0) of the reg_ctrl unit to the 62.5 MHz domain 
+  input_synchronizer: process (clk_sys_i)
   begin
-    if rising_edge(clk_sys_i) then
+    if rising_edge (clk_sys_i) then
       if rst_n_sys_i = '0' then
-        dac_p_c   <= (others => '0');
+        wrabbit_en_sync <= (others => '0');
       else
-        if dac_p_c = "111111111111111111111111" then 
-          dac_p_c <= (others => '0');
-        elsif wrabbit_dac_wr_p_i = '1' then
-          dac_p_c <= dac_p_c + 1;
-        end if;
+        wrabbit_en_sync <= wrabbit_en_sync(0) & wrabbit_reg_i(0);
       end if;
     end if;
   end process;
+  wrabbit_en <= wrabbit_en_sync(1);
 
-
+  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
+  -- FSM timeout counter
   p_timeout_counter : process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
@@ -159,27 +158,15 @@ begin  -- behavioral
       end if;
     end if;
   end process;
-
   tmo_restart <= wrabbit_state_changed;
 
-  input_synchronizer: process (clk_sys_i)
-  begin
-    if rising_edge (clk_sys_i) then
-      if rst_n_sys_i = '0' then
-        wrabbit_en_sync <= (others => '0');
-      else
-        wrabbit_en_sync <= wrabbit_en_sync(0) & wrabbit_reg_i(0);
-      end if;
-    end if;
-  end process;
-  wrabbit_en <= wrabbit_en_sync(1);
-
+  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
+  -- FSM
+  gen_with_wr_core : if(g_with_wrabbit_core) generate
   p_whiterabbit_fsm : process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
       if rst_n_sys_i = '0' then
-        csync_wrabbit_sysclk        <= '0';
-        wrabbit_clk_aux_lock_en     <= '0';
         wrabbit_state               <= wrabbit_CORE_OFFLINE;
         wrabbit_state_changed       <= '0';
       else
@@ -214,14 +201,12 @@ begin  -- behavioral
               wrabbit_state_changed <= '1';
             elsif(wrabbit_clk_aux_locked_i = '1' and tmo_hit = '1') then
               wrabbit_state         <= wrabbit_SYNCED;
-              csync_wrabbit_sysclk  <= '1';
               wrabbit_state_changed <= '1';
             else
               wrabbit_state_changed <= '0';
             end if;
 
           when wrabbit_SYNCED =>
-            csync_wrabbit_sysclk    <= '0';
 
             if(wrabbit_time_valid_i = '0' or wrabbit_en = '0' or wrabbit_clk_aux_locked_i = '0') then
               wrabbit_state         <= wrabbit_SYNCING;
@@ -233,8 +218,10 @@ begin  -- behavioral
         end if;
       end if;
     end process;
+  end generate gen_with_wr_core;
 
-
+  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
+  -- Synchronization of the outputs to the 125 MHz domain to be used by the reg_ctrl unit
   outputs_synchronizer: process (clk_ref_i)
   begin
     if rising_edge (clk_ref_i) then
@@ -254,21 +241,39 @@ begin  -- behavioral
     end if;
   end process;
 
-  wrabbit_synched_o           <= clk_aux_locked(1);
-  wrabbit_state_syncing       <= '1' when (wrabbit_state = wrabbit_SYNCING or wrabbit_state = wrabbit_SYNCED) else '0';
-  wrabbit_clk_aux_lock_en_o   <= clk_aux_lock_en(1);
+  with_wrabbit_core           <= '1' when g_with_wrabbit_core else '0';
+  wrabbit_synched_o           <= clk_aux_locked(1)  and with_wrabbit_core;
+  wrabbit_clk_aux_lock_en_o   <= clk_aux_lock_en(1) and with_wrabbit_core;
+  wrabbit_state_syncing       <= '1' when ((wrabbit_state = wrabbit_SYNCING or wrabbit_state = wrabbit_SYNCED) and with_wrabbit_core = '1') else '0';
 
   wrabbit_reg_o(0)            <= '1'; -- reserved
-  wrabbit_reg_o(1)            <= '1'; -- reserved
-  wrabbit_reg_o(2)            <= link_up(1);
-  wrabbit_reg_o(3)            <= state_syncing(1);
-  wrabbit_reg_o(4)            <= clk_aux_locked(1);
-  wrabbit_reg_o(5)            <= time_valid(1);
-  wrabbit_reg_o(6)            <= wrabbit_reg_i(0);
-  wrabbit_reg_o(7)            <= clk_aux_locked(1);
-  wrabbit_reg_o(8)            <= time_valid(1);
-  wrabbit_reg_o(9)            <= clk_aux_lock_en(1);
-  wrabbit_reg_o(15 downto 10) <= std_logic_vector(dac_p_c(5 downto 0));
-  wrabbit_reg_o(31 downto 16) <= wrabbit_dac_value_i(15 downto 0);
-  
-end behavioral;
+  wrabbit_reg_o(1)            <= with_wrabbit_core;
+  wrabbit_reg_o(2)            <= link_up(1)         and with_wrabbit_core;
+  wrabbit_reg_o(3)            <= state_syncing(1)   and with_wrabbit_core;
+  wrabbit_reg_o(4)            <= clk_aux_locked(1)  and with_wrabbit_core;
+  wrabbit_reg_o(5)            <= time_valid(1)      and with_wrabbit_core;
+  wrabbit_reg_o(6)            <= wrabbit_reg_i(0)   and with_wrabbit_core;
+  wrabbit_reg_o(7)            <= clk_aux_locked(1)  and with_wrabbit_core;
+  wrabbit_reg_o(8)            <= time_valid(1)      and with_wrabbit_core;
+  wrabbit_reg_o(9)            <= clk_aux_lock_en(1) and with_wrabbit_core;
+  wrabbit_reg_o(15 downto 10) <= (others => '0') when with_wrabbit_core = '1' else std_logic_vector(dac_p_c(5 downto 0));
+  wrabbit_reg_o(31 downto 16) <= (others => '0') when with_wrabbit_core = '1' else wrabbit_dac_value_i(15 downto 0);
+
+  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
+  -- used only for debug
+  p_dac_p_counter : process(clk_sys_i)
+  begin
+    if rising_edge(clk_sys_i) then
+      if rst_n_sys_i = '0' then
+        dac_p_c   <= (others => '0');
+      else
+        if dac_p_c = "111111111111111111111111" then 
+          dac_p_c <= (others => '0');
+        elsif wrabbit_dac_wr_p_i = '1' then
+          dac_p_c <= dac_p_c + 1;
+        end if;
+      end if;
+    end if;
+  end process;
+
+end rtl;

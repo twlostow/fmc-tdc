@@ -129,7 +129,7 @@ entity circular_buffer is
      tstamp_wr_dat_o   : out std_logic_vector(127 downto 0);   -- not used
 
      -- Signals to the GN4124/VME core unit (WISHBONE pipelined): timestamps reading
-     tdc_mem_wb_ack_o     : out std_logic;                     -- timestamp reading WISHBONE pepelined acknowledge
+     tdc_mem_wb_ack_o     : out std_logic;                     -- timestamp reading WISHBONE pipelined acknowledge
      tdc_mem_wb_dat_o     : out std_logic_vector(31 downto 0); -- 32 bit words
      tdc_mem_wb_stall_o   : out std_logic);                    -- timestamp reading WISHBONE pipelined stall
 
